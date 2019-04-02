@@ -18,8 +18,11 @@ abstract class Creature
 {
   protected $name;
   protected $hp;
+  protected $mp;
   protected $attackMin;
   protected $attackMax;
+  protected $healMin;
+  protected $healMax;
   abstract public function sayCry();
   public function setName($str)
   {
@@ -37,6 +40,14 @@ abstract class Creature
   {
     return $this->hp;
   }
+  public function setMp($num)
+  {
+    $this->mp = $num;
+  }
+  public function getMp()
+  {
+    return $this->mp;
+  }
   public function attack($targetObj)
   {
     $attackPoint = mt_rand($this->attackMin, $this->attackMax);
@@ -48,18 +59,32 @@ abstract class Creature
     $targetObj->setHp($targetObj->getHp() - $attackPoint);
     History::set($attackPoint . 'ポイントのダメージ！');
   }
+  public function heal($targetObj)
+  {
+    $healPoint = mt_rand($this->healMin, $this->healMax);
+    if (($targetObj->getHp() + $healPoint) > 500) {
+      $healPoint = $healPoint - (($targetObj->getHp() + $healPoint) - 500);
+    }
+
+    $targetObj->setHp($targetObj->getHp() + $healPoint);
+    $targetObj->setMp($targetObj->getMp() - 1);
+    History::set($healPoint . 'ポイントの回復！');
+  }
 }
 // 人クラス
 class Human extends Creature
 {
   protected $sex;
-  public function __construct($name, $sex, $hp, $attackMin, $attackMax)
+  public function __construct($name, $sex, $hp, $mp, $attackMin, $attackMax, $healMin, $healMax)
   {
     $this->name = $name;
     $this->sex = $sex;
     $this->hp = $hp;
+    $this->mp = $mp;
     $this->attackMin = $attackMin;
     $this->attackMax = $attackMax;
+    $this->healMin = $healMin;
+    $this->healMax = $healMax;
   }
   public function setSex($num)
   {
@@ -81,6 +106,20 @@ class Human extends Creature
         break;
       case Sex::OKAMA:
         History::set('もっと！♡');
+        break;
+    }
+  }
+  public function sayMsg()
+  {
+    switch ($this->sex) {
+      case Sex::MAN:
+        History::set('(' . $this->getName() . ')...力がみなぎってきた！');
+        break;
+      case Sex::WOMAN:
+        History::set('(' . $this->getName() . ')...まだまだこれからだわ！');
+        break;
+      case Sex::OKAMA:
+        History::set('(' . $this->getName() . ')///きくぅ♡！');
         break;
     }
   }
@@ -156,7 +195,10 @@ class History implements HistoryInterface
 }
 
 // インスタンス生成
-$human = new Human('勇者見習い', Sex::OKAMA, 500, 40, 120);
+//Human($name, $sex, $hp, $mp, $attackMin, $attackMax, $healMin, $healMax)
+//Monster($name, $hp, $img, $attackMin, $attackMax)
+//MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
+$human = new Human('勇者見習い', Sex::MAN, 500, 3, 40, 120, 10, 100);
 $monsters[] = new Monster('フランケン', 100, 'img/monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, 'img/monster02.png', 20, 60, mt_rand(50, 100));
 $monsters[] = new Monster('ドラキュリー', 200, 'img/monster03.png', 30, 50);
@@ -195,6 +237,7 @@ function gameOver()
 //1.post送信されていた場合
 if (!empty($_POST)) {
   $attackFlg = (!empty($_POST['attack'])) ? true : false;
+  $healFlg = (!empty($_POST['heal'])) ? true : false;
   $startFlg = (!empty($_POST['start'])) ? true : false;
   error_log('POSTされた！');
 
@@ -202,6 +245,8 @@ if (!empty($_POST)) {
     History::set('ゲームスタート！');
     init();
   } else {
+
+    //攻撃・回復・逃げるで処理を分岐させる
     // 攻撃するを押した場合
     if ($attackFlg) {
 
@@ -209,6 +254,29 @@ if (!empty($_POST)) {
       History::set($_SESSION['human']->getName() . 'の攻撃！');
       $_SESSION['human']->attack($_SESSION['monster']);
       $_SESSION['monster']->sayCry();
+
+      // モンスターが攻撃をする
+      History::set($_SESSION['monster']->getName() . 'の攻撃！');
+      $_SESSION['monster']->attack($_SESSION['human']);
+      $_SESSION['human']->sayCry();
+
+      // 自分のhpが0以下になったらゲームオーバー
+      if ($_SESSION['human']->getHp() <= 0) {
+        gameOver();
+      } else {
+        // hpが0以下になったら、別のモンスターを出現させる
+        if ($_SESSION['monster']->getHp() <= 0) {
+          History::set($_SESSION['monster']->getName() . 'を倒した！');
+          createMonster();
+          $_SESSION['knockDownCount'] = $_SESSION['knockDownCount'] + 1;
+        }
+      }
+    } elseif ($healFlg) {
+
+      // 自分を回復させる
+      History::set($_SESSION['human']->getName() . 'のHPを回復！');
+      $_SESSION['human']->heal($_SESSION['human']);
+      $_SESSION['human']->sayMsg();
 
       // モンスターが攻撃をする
       History::set($_SESSION['monster']->getName() . 'の攻撃！');
@@ -291,16 +359,25 @@ if (!empty($_POST)) {
 
         input[type="submit"] {
             border: none;
-            padding: 15px 30px;
+            padding: 15px 15px;
             margin-bottom: 15px;
             background: black;
             color: white;
-            float: right;
+            float: left;
         }
 
         input[type="submit"]:hover {
             background: #3d3938;
             cursor: pointer;
+        }
+
+        input.btn-short {
+            color: gray;
+        }
+
+        input.btn-short:hover {
+            color: gray;
+            cursor: not-allowed;
         }
 
         a {
@@ -331,8 +408,16 @@ if (!empty($_POST)) {
         <p style="font-size:14px; text-align:center;">モンスターのHP：<?php echo $_SESSION['monster']->getHp(); ?></p>
         <p>倒したモンスター数：<?php echo $_SESSION['knockDownCount']; ?></p>
         <p>勇者の残りHP：<?php echo $_SESSION['human']->getHp(); ?></p>
+        <p>勇者の残りMP：<?php echo $_SESSION['human']->getMp(); ?></p>
         <form method="post">
             <input type="submit" name="attack" value="▶攻撃する">
+            <?php if ($_SESSION['human']->getMp() >= 1) { ?>
+            <input type="submit" name="heal" value="▶回復する(mp:1)">
+            <?php 
+          } else { ?>
+            <input type="submit" name="heal" value="▶回復する(mp不足)" class="btn-short" disabled>
+            <?php 
+          } ?>
             <input type="submit" name="escape" value="▶逃げる">
             <input type="submit" name="start" value="▶ゲームリスタート">
         </form>
