@@ -18,11 +18,8 @@ abstract class Creature
 {
   protected $name;
   protected $hp;
-  protected $mp;
   protected $attackMin;
   protected $attackMax;
-  protected $healMin;
-  protected $healMax;
   abstract public function sayCry();
   public function setName($str)
   {
@@ -40,14 +37,6 @@ abstract class Creature
   {
     return $this->hp;
   }
-  public function setMp($num)
-  {
-    $this->mp = $num;
-  }
-  public function getMp()
-  {
-    return $this->mp;
-  }
   public function attack($targetObj)
   {
     $attackPoint = mt_rand($this->attackMin, $this->attackMax);
@@ -59,32 +48,27 @@ abstract class Creature
     $targetObj->setHp($targetObj->getHp() - $attackPoint);
     History::set($attackPoint . 'ポイントのダメージ！');
   }
-  public function heal($targetObj)
-  {
-    $healPoint = mt_rand($this->healMin, $this->healMax);
-    if (($targetObj->getHp() + $healPoint) > 500) {
-      $healPoint = $healPoint - (($targetObj->getHp() + $healPoint) - 500);
-    }
-
-    $targetObj->setHp($targetObj->getHp() + $healPoint);
-    $targetObj->setMp($targetObj->getMp() - 1);
-    History::set($healPoint . 'ポイントの回復！');
-  }
 }
 // 人クラス
 class Human extends Creature
 {
+  //回復のパラメータをクラス定数としてセット
+  const HEALMIN = 10;
+  const HEALMAX = 100;
+
   protected $sex;
-  public function __construct($name, $sex, $hp, $mp, $attackMin, $attackMax, $healMin, $healMax)
+  protected $mp;
+  protected $maxHp;
+
+  public function __construct($name, $sex, $hp, $mp, $attackMin, $attackMax)
   {
     $this->name = $name;
     $this->sex = $sex;
     $this->hp = $hp;
+    $this->maxHp = $hp;
     $this->mp = $mp;
     $this->attackMin = $attackMin;
     $this->attackMax = $attackMax;
-    $this->healMin = $healMin;
-    $this->healMax = $healMax;
   }
   public function setSex($num)
   {
@@ -94,6 +78,11 @@ class Human extends Creature
   {
     return $this->sex;
   }
+  public function getMp()
+  {
+    return $this->mp;
+  }
+
   public function sayCry()
   {
     History::set($this->name . 'が叫ぶ！');
@@ -122,6 +111,18 @@ class Human extends Creature
         History::set('(' . $this->getName() . ')///きくぅ♡！');
         break;
     }
+  }
+  public function heal()
+  {
+    $magicPoint = 1;
+    $healPoint = mt_rand(Human::HEALMIN, Human::HEALMAX);
+    if (($this->getHp() + $healPoint) > $this->maxHp) {
+      $healPoint = $healPoint - (($this->getHp() + $healPoint) - $this->maxHp);
+    }
+
+    $this->setHp($this->getHp() + $healPoint);
+    $this->mp -= $magicPoint;
+    History::set($healPoint . 'ポイントの回復！');
   }
 }
 // モンスタークラス
@@ -195,10 +196,10 @@ class History implements HistoryInterface
 }
 
 // インスタンス生成
-//Human($name, $sex, $hp, $mp, $attackMin, $attackMax, $healMin, $healMax)
+//Human($name, $sex, $hp, $mp, $attackMin, $attackMax)
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者見習い', Sex::MAN, 500, 3, 40, 120, 10, 100);
+$human = new Human('勇者見習い', Sex::MAN, 500, 3, 40, 120);
 $monsters[] = new Monster('フランケン', 100, 'img/monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, 'img/monster02.png', 20, 60, mt_rand(50, 100));
 $monsters[] = new Monster('ドラキュリー', 200, 'img/monster03.png', 30, 50);
@@ -275,7 +276,7 @@ if (!empty($_POST)) {
 
       // 自分を回復させる
       History::set($_SESSION['human']->getName() . 'のHPを回復！');
-      $_SESSION['human']->heal($_SESSION['human']);
+      $_SESSION['human']->heal();
       $_SESSION['human']->sayMsg();
 
       // モンスターが攻撃をする
