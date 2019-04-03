@@ -137,17 +137,12 @@ class MagicMonster extends Monster
 
 class FlyingMonster extends Monster
 {
-  function __construct($name, $hp, $img, $attackMin, $attackMax)
-  {
-    parent::__construct($name, $hp, $img, $attackMin, $attackMax);
-  }
-
   public function attack($targetObj)
   {
     if (!mt_rand(0, 2)) { //3分の1の確率で空を飛ぶ攻撃
 
       //空を飛ぶ攻撃の場合、パラメータを1.2倍
-      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * 2;
+      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * 1.2;
 
       //空を飛ぶ攻撃は自爆ダメージあり
       $reactionPoint = 20;
@@ -155,7 +150,7 @@ class FlyingMonster extends Monster
       History::set($this->name . 'の空からの体当たり攻撃!!');
       $targetObj->setHp($targetObj->getHp() - $attackPoint);
       History::set($attackPoint . 'ポイントのダメージ！');
-      $this->setHp($this->getHp() - $reactionPoint);
+      $this->hp -= $reactionPoint;
       History::set('体当たりの反動で' . $this->name . 'にも' . $reactionPoint . 'ポイントのダメージ！');
     } else {
       parent::attack($targetObj);
