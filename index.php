@@ -134,6 +134,35 @@ class MagicMonster extends Monster
     }
   }
 }
+
+class FlyingMonster extends Monster
+{
+  function __construct($name, $hp, $img, $attackMin, $attackMax)
+  {
+    parent::__construct($name, $hp, $img, $attackMin, $attackMax);
+  }
+
+  public function attack($targetObj)
+  {
+    if (!mt_rand(0, 2)) { //3分の1の確率で空を飛ぶ攻撃
+
+      //空を飛ぶ攻撃の場合、パラメータを1.2倍
+      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * 2;
+
+      //空を飛ぶ攻撃は自爆ダメージあり
+      $reactionPoint = 20;
+
+      History::set($this->name . 'の空からの体当たり攻撃!!');
+      $targetObj->setHp($targetObj->getHp() - $attackPoint);
+      History::set($attackPoint . 'ポイントのダメージ！');
+      $this->setHp($this->getHp() - $reactionPoint);
+      History::set('体当たりの反動で' . $this->name . 'にも' . $reactionPoint . 'ポイントのダメージ！');
+    } else {
+      parent::attack($targetObj);
+    }
+  }
+}
+
 interface HistoryInterface
 {
   public static function set($str);
@@ -165,11 +194,12 @@ $monsters[] = new Monster('スカルフェイス', 150, 'img/monster05.png', 30,
 $monsters[] = new Monster('毒ハンド', 100, 'img/monster06.png', 10, 30);
 $monsters[] = new Monster('泥ハンド', 120, 'img/monster07.png', 20, 30);
 $monsters[] = new Monster('血のハンド', 180, 'img/monster08.png', 30, 50);
+$monsters[] = new FlyingMonster('見習い魔女', 260, 'img/monster09.png', 20, 70);
 
 function createMonster()
 {
   global $monsters;
-  $monster =  $monsters[mt_rand(0, 7)];
+  $monster =  $monsters[mt_rand(0, 8)];
   History::set($monster->getName() . 'が現れた！');
   $_SESSION['monster'] =  $monster;
 }
