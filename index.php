@@ -4,6 +4,9 @@ ini_set('log_errors', 'on');  //ログを取るか
 ini_set('error_log', 'php.log');  //ログの出力ファイルを指定
 session_start(); //セッション使う
 
+// 冗長なディレクトリを定数化
+const URL = 'img/';
+
 // モンスター達格納用
 $monsters = array();
 // 性別クラス
@@ -36,19 +39,6 @@ abstract class Creature
   public function getHp()
   {
     return $this->hp;
-  }
-  public function getAttackMin()
-  {
-    return $this->attackMin;
-  }
-  public function getAttackMax()
-  {
-    return $this->attackMax;
-  }
-  public function setAttack($num1, $num2)
-  {
-    $this->attackMin = $num1;
-    $this->attackMax = $num2;
   }
   public function attack($targetObj)
   {
@@ -95,6 +85,19 @@ class Human extends Creature
   {
     return $this->mp;
   }
+  public function getAttackMin()
+  {
+    return $this->attackMin;
+  }
+  public function getAttackMax()
+  {
+    return $this->attackMax;
+  }
+  public function setAttack($num1, $num2)
+  {
+    $this->attackMin = $num1;
+    $this->attackMax = $num2;
+  }
   public function setMaxHp($num)
   {
     $this->maxHp = $num;
@@ -103,8 +106,6 @@ class Human extends Creature
   {
     return $this->maxHp;
   }
-
-
   public function sayCry()
   {
     History::set($this->name . 'が叫ぶ！');
@@ -284,16 +285,16 @@ class History implements HistoryInterface
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
 $human = new Human('勇者見習い', Sex::MAN, 500, 3, 40, 120);
-$god = new God('神様', 'img/god.png');
-$monsters[] = new Monster('フランケン', 100, 'img/monster01.png', 20, 40);
-$monsters[] = new MagicMonster('フランケンNEO', 300, 'img/monster02.png', 20, 60, mt_rand(50, 100));
-$monsters[] = new Monster('ドラキュリー', 200, 'img/monster03.png', 30, 50);
-$monsters[] = new MagicMonster('ドラキュラ男爵', 400, 'img/monster04.png', 50, 80, mt_rand(60, 120));
-$monsters[] = new Monster('スカルフェイス', 150, 'img/monster05.png', 30, 60);
-$monsters[] = new Monster('毒ハンド', 100, 'img/monster06.png', 10, 30);
-$monsters[] = new Monster('泥ハンド', 120, 'img/monster07.png', 20, 30);
-$monsters[] = new Monster('血のハンド', 180, 'img/monster08.png', 30, 50);
-$monsters[] = new FlyingMonster('見習い魔女', 260, 'img/monster09.png', 20, 70);
+$god = new God('神様', URL . 'god.png');
+$monsters[] = new Monster('フランケン', 100, URL . 'monster01.png', 20, 40);
+$monsters[] = new MagicMonster('フランケンNEO', 300, URL . 'monster02.png', 20, 60, mt_rand(50, 100));
+$monsters[] = new Monster('ドラキュリー', 200, URL . 'monster03.png', 30, 50);
+$monsters[] = new MagicMonster('ドラキュラ男爵', 400, URL . 'monster04.png', 50, 80, mt_rand(60, 120));
+$monsters[] = new Monster('スカルフェイス', 150, URL . 'monster05.png', 30, 60);
+$monsters[] = new Monster('毒ハンド', 100, URL . 'monster06.png', 10, 30);
+$monsters[] = new Monster('泥ハンド', 120, URL . 'monster07.png', 20, 30);
+$monsters[] = new Monster('血のハンド', 180, URL . 'monster08.png', 30, 50);
+$monsters[] = new FlyingMonster('見習い魔女', 260, URL . 'monster09.png', 20, 70);
 
 function createMonster()
 {
@@ -405,31 +406,22 @@ if (!empty($_POST)) {
   } else {
     //神様の場合の処理
     if ($recoveryFlg) {
-
       // 勇者のHPを最大値まで戻す
       History::set($_SESSION['human']->getName() . 'の体力が回復していく！');
       $_SESSION['god']->recovery($_SESSION['human']);
-
-      // 神様の出現した後は必ずモンスターを出す
-      createMonster();
     } elseif ($powerFlg) {
-
       // 勇者の攻撃力を強化
       History::set($_SESSION['human']->getName() . 'の攻撃力が上がっていく！');
       $_SESSION['god']->power($_SESSION['human']);
-
-      // 神様の出現した後は必ずモンスターを出す
-      createMonster();
     } elseif ($toughFlg) {
       // 勇者のHPを増強
       History::set($_SESSION['human']->getName() . 'の体力が上がっていく！');
       $_SESSION['god']->tough($_SESSION['human']);
-
-      // 神様の出現した後は必ずモンスターを出す
-      createMonster();
     }
-    $_POST = array();
+    // 神様の出現した後は必ずモンスターを出す
+    createMonster();
   }
+  $_POST = array();
 }
 ?>
 
@@ -437,142 +429,142 @@ if (!empty($_POST)) {
 <html>
 
 <head>
-    <meta charset="utf-8">
-    <title>ホームページのタイトル</title>
-    <style>
-        body {
-            margin: 0 auto;
-            padding: 150px;
-            width: 25%;
-            background: #fbfbfa;
-            color: white;
-        }
+  <meta charset="utf-8">
+  <title>ホームページのタイトル</title>
+  <style>
+    body {
+      margin: 0 auto;
+      padding: 150px;
+      width: 25%;
+      background: #fbfbfa;
+      color: white;
+    }
 
-        h1 {
-            color: white;
-            font-size: 20px;
-            text-align: center;
-        }
+    h1 {
+      color: white;
+      font-size: 20px;
+      text-align: center;
+    }
 
-        h2 {
-            color: white;
-            font-size: 16px;
-            text-align: center;
-        }
+    h2 {
+      color: white;
+      font-size: 16px;
+      text-align: center;
+    }
 
-        form {
-            overflow: hidden;
-        }
+    form {
+      overflow: hidden;
+    }
 
-        input[type="text"] {
-            color: #545454;
-            height: 60px;
-            width: 100%;
-            padding: 5px 10px;
-            font-size: 16px;
-            display: block;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
+    input[type="text"] {
+      color: #545454;
+      height: 60px;
+      width: 100%;
+      padding: 5px 10px;
+      font-size: 16px;
+      display: block;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
 
-        input[type="password"] {
-            color: #545454;
-            height: 60px;
-            width: 100%;
-            padding: 5px 10px;
-            font-size: 16px;
-            display: block;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
+    input[type="password"] {
+      color: #545454;
+      height: 60px;
+      width: 100%;
+      padding: 5px 10px;
+      font-size: 16px;
+      display: block;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
 
-        input[type="submit"] {
-            border: none;
-            padding: 15px 15px;
-            margin-bottom: 15px;
-            background: black;
-            color: white;
-            float: left;
-        }
+    input[type="submit"] {
+      border: none;
+      padding: 15px 15px;
+      margin-bottom: 15px;
+      background: black;
+      color: white;
+      float: left;
+    }
 
-        input[type="submit"]:hover {
-            background: #3d3938;
-            cursor: pointer;
-        }
+    input[type="submit"]:hover {
+      background: #3d3938;
+      cursor: pointer;
+    }
 
-        input.btn-short {
-            color: gray;
-        }
+    input.btn-short {
+      color: gray;
+    }
 
-        input.btn-short:hover {
-            color: gray;
-            cursor: not-allowed;
-        }
+    input.btn-short:hover {
+      color: gray;
+      cursor: not-allowed;
+    }
 
-        a {
-            color: #545454;
-            display: block;
-        }
+    a {
+      color: #545454;
+      display: block;
+    }
 
-        a:hover {
-            text-decoration: none;
-        }
-    </style>
+    a:hover {
+      text-decoration: none;
+    }
+  </style>
 </head>
 
 <body>
-    <h1 style="text-align:center; color:#333;">ゲーム「ドラ◯エ!!」</h1>
-    <div style="background:black; padding:15px; position:relative;">
-        <?php if (empty($_SESSION)) { ?>
-        <h2 style="margin-top:60px;">GAME START ?</h2>
-        <form method="post">
-            <input type="submit" name="start" value="▶ゲームスタート">
-        </form>
-        <?php 
-      } elseif (empty($_SESSION['god'])) { ?>
-        <!-- オブジェクトがモンスターだった場合の表示 -->
-        <h2><?php echo $_SESSION['monster']->getName() . ' が現れた !!'; ?></h2>
-        <div style="height: 150px;">
-            <img src="<?php echo $_SESSION['monster']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
-        </div>
-        <p style="font-size:14px; text-align:center;">モンスターのHP：<?php echo $_SESSION['monster']->getHp(); ?></p>
-        <p>倒したモンスター数：<?php echo $_SESSION['knockDownCount']; ?></p>
-        <p>勇者の残りHP：<?php echo $_SESSION['human']->getHp(); ?></p>
-        <p>勇者の残りMP：<?php echo $_SESSION['human']->getMp(); ?></p>
-        <form method="post">
-            <input type="submit" name="attack" value="▶攻撃する">
-            <?php if ($_SESSION['human']->getMp() >= 1) { ?>
-            <input type="submit" name="heal" value="▶回復する(mp:1)">
-            <?php 
-          } else { ?>
-            <input type="submit" name="heal" value="▶回復する(mp不足)" class="btn-short" disabled>
-            <?php 
-          } ?>
-            <input type="submit" name="escape" value="▶逃げる">
-            <input type="submit" name="start" value="▶ゲームリスタート">
-        </form>
-        <?php 
+  <h1 style="text-align:center; color:#333;">ゲーム「ドラ◯エ!!」</h1>
+  <div style="background:black; padding:15px; position:relative;">
+    <?php if (empty($_SESSION)) { ?>
+      <h2 style="margin-top:60px;">GAME START ?</h2>
+      <form method="post">
+        <input type="submit" name="start" value="▶ゲームスタート">
+      </form>
+    <?php
+  } elseif (empty($_SESSION['god'])) { ?>
+      <!-- オブジェクトがモンスターだった場合の表示 -->
+      <h2><?php echo $_SESSION['monster']->getName() . ' が現れた !!'; ?></h2>
+      <div style="height: 150px;">
+        <img src="<?php echo $_SESSION['monster']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
+      </div>
+      <p style="font-size:14px; text-align:center;">モンスターのHP：<?php echo $_SESSION['monster']->getHp(); ?></p>
+      <p>倒したモンスター数：<?php echo $_SESSION['knockDownCount']; ?></p>
+      <p>勇者の残りHP：<?php echo $_SESSION['human']->getHp(); ?></p>
+      <p>勇者の残りMP：<?php echo $_SESSION['human']->getMp(); ?></p>
+      <form method="post">
+        <input type="submit" name="attack" value="▶攻撃する">
+        <?php if ($_SESSION['human']->getMp() >= 1) { ?>
+          <input type="submit" name="heal" value="▶回復する(mp:1)">
+        <?php
       } else { ?>
-        <!-- オブジェクトが神様だった場合の表示 -->
-        <h2><?php echo $_SESSION['god']->getName() . 'が現れた!!'; ?></h2>
-        <div style="height: 150px;">
-            <img src="<?php echo $_SESSION['god']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
-        </div>
-        <p style="font-size:14px; text-align:center;">☆☆☆3つの願いが叶います☆☆☆</p>
-        <p>倒したモンスター数：<?php echo $_SESSION['knockDownCount']; ?></p>
-        <p>勇者の残りHP：<?php echo $_SESSION['human']->getHp(); ?></p>
-        <p>勇者の残りMP：<?php echo $_SESSION['human']->getMp(); ?></p>
-        <form method="post">
-            <input type="submit" name="recovery" value="▶回復してもらう">
-            <input type="submit" name="power" value="▶強くしてもらう">
-            <input type="submit" name="tough" value="▶丈夫にしてもらう">
-        </form>
-        <?php 
+          <input type="submit" name="heal" value="▶回復する(mp不足)" class="btn-short" disabled>
+        <?php
       } ?>
-        <div style="position:absolute; right:-350px; top:0; color:black; width:  300px ; ">
-            <p><?php echo (!empty($_SESSION['history'])) ? $_SESSION['history'] : ''; ?></p>
-        </div>
+        <input type="submit" name="escape" value="▶逃げる">
+        <input type="submit" name="start" value="▶ゲームリスタート">
+      </form>
+    <?php
+  } else { ?>
+      <!-- オブジェクトが神様だった場合の表示 -->
+      <h2><?php echo $_SESSION['god']->getName() . 'が現れた!!'; ?></h2>
+      <div style="height: 150px;">
+        <img src="<?php echo $_SESSION['god']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
+      </div>
+      <p style="font-size:14px; text-align:center;">☆☆☆3つの願いが叶います☆☆☆</p>
+      <p>倒したモンスター数：<?php echo $_SESSION['knockDownCount']; ?></p>
+      <p>勇者の残りHP：<?php echo $_SESSION['human']->getHp(); ?></p>
+      <p>勇者の残りMP：<?php echo $_SESSION['human']->getMp(); ?></p>
+      <form method="post">
+        <input type="submit" name="recovery" value="▶回復してもらう">
+        <input type="submit" name="power" value="▶強くしてもらう">
+        <input type="submit" name="tough" value="▶丈夫にしてもらう">
+      </form>
+    <?php
+  } ?>
+    <div style="position:absolute; right:-350px; top:0; color:black; width:  300px ; ">
+      <p><?php echo (!empty($_SESSION['history'])) ? $_SESSION['history'] : ''; ?></p>
     </div>
+  </div>
 </body>
 
-</html> 
+</html>
