@@ -143,7 +143,7 @@ class Human extends Creature
   }
   public function heal()
   {
-    $magicPoint = 1;
+    $magicPoint = 10;
     $healPoint = mt_rand(Human::HEALMIN, Human::HEALMAX);
     if (($this->getHp() + $healPoint) > $this->maxHp) {
       $healPoint = $healPoint - (($this->getHp() + $healPoint) - $this->maxHp);
@@ -154,6 +154,9 @@ class Human extends Creature
     History::set($healPoint . 'ポイントの回復！');
   }
 }
+// 魔法使いクラス
+class which extends Human
+{ }
 // モンスタークラス
 class Monster extends Creature
 {
@@ -284,7 +287,8 @@ class History implements HistoryInterface
 //God($name, $img)
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, URL . 'hero.png', 3, 40, 120);
+$human = new Human('勇者', Sex::MAN, 500, URL . 'hero.png', 30, 40, 120);
+$witch = new Witch('魔法使い', Sex::WOMAN, 300, URL . 'witch.png', mt_rand(50, 100), 40, 120);
 $god = new God('神様', URL . 'god.png');
 $monsters[] = new Monster('フランケン', 100, URL . 'monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, URL . 'monster02.png', 20, 60, mt_rand(50, 100));
