@@ -5,7 +5,7 @@ ini_set('error_log', 'php.log');  //ログの出力ファイルを指定
 session_start(); //セッション使う
 
 // 冗長なディレクトリを定数化
-const URL = 'img/';
+const DIR_IMAGES = 'img/';
 
 // モンスター達格納用
 $monsters = array();
@@ -223,8 +223,8 @@ class FlyingMonster extends Monster
 
 class God
 {
-  protected $name;
-  protected $img;
+  private $name;
+  private $img;
 
   public function  __construct($name, $img)
   {
@@ -285,16 +285,16 @@ class History implements HistoryInterface
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
 $human = new Human('勇者見習い', Sex::MAN, 500, 3, 40, 120);
-$god = new God('神様', URL . 'god.png');
-$monsters[] = new Monster('フランケン', 100, URL . 'monster01.png', 20, 40);
-$monsters[] = new MagicMonster('フランケンNEO', 300, URL . 'monster02.png', 20, 60, mt_rand(50, 100));
-$monsters[] = new Monster('ドラキュリー', 200, URL . 'monster03.png', 30, 50);
-$monsters[] = new MagicMonster('ドラキュラ男爵', 400, URL . 'monster04.png', 50, 80, mt_rand(60, 120));
-$monsters[] = new Monster('スカルフェイス', 150, URL . 'monster05.png', 30, 60);
-$monsters[] = new Monster('毒ハンド', 100, URL . 'monster06.png', 10, 30);
-$monsters[] = new Monster('泥ハンド', 120, URL . 'monster07.png', 20, 30);
-$monsters[] = new Monster('血のハンド', 180, URL . 'monster08.png', 30, 50);
-$monsters[] = new FlyingMonster('見習い魔女', 260, URL . 'monster09.png', 20, 70);
+$god = new God('神様', DIR_IMAGES . 'god.png');
+$monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
+$monsters[] = new MagicMonster('フランケンNEO', 300, DIR_IMAGES . 'monster02.png', 20, 60, mt_rand(50, 100));
+$monsters[] = new Monster('ドラキュリー', 200, DIR_IMAGES . 'monster03.png', 30, 50);
+$monsters[] = new MagicMonster('ドラキュラ男爵', 400, DIR_IMAGES . 'monster04.png', 50, 80, mt_rand(60, 120));
+$monsters[] = new Monster('スカルフェイス', 150, DIR_IMAGES . 'monster05.png', 30, 60);
+$monsters[] = new Monster('毒ハンド', 100, DIR_IMAGES . 'monster06.png', 10, 30);
+$monsters[] = new Monster('泥ハンド', 120, DIR_IMAGES . 'monster07.png', 20, 30);
+$monsters[] = new Monster('血のハンド', 180, DIR_IMAGES . 'monster08.png', 30, 50);
+$monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.png', 20, 70);
 
 function createMonster()
 {
