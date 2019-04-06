@@ -5,7 +5,7 @@ ini_set('error_log', 'php.log');  //ログの出力ファイルを指定
 session_start(); //セッション使う
 
 // 冗長なディレクトリを定数化
-const URL = 'img/';
+const DIR_IMAGES = 'img/';
 
 // モンスター達格納用
 $monsters = array();
@@ -226,8 +226,8 @@ class FlyingMonster extends Monster
 
 class God
 {
-  protected $name;
-  protected $img;
+  private $name;
+  private $img;
 
   public function  __construct($name, $img)
   {
