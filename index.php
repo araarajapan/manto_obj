@@ -12,9 +12,9 @@ $monsters = array();
 
 //BOSSのHPを作り出す
 if ($_SESSION['knockDownCount'] >= 4) {
-  $bossHP = 500 + ($_SESSION['knockDownCount'] * 10);
+  $bossHp = 500 + ($_SESSION['knockDownCount'] * 10);
 } else {
-  $bossHP = 500;
+  $bossHp = 500;
 }
 
 // 性別クラス
@@ -197,7 +197,6 @@ class Monster extends Creature
     $this->attackMin = $attackMin;
     $this->attackMax = $attackMax;
   }
-  // ゲッター
   public function sayCry()
   {
     History::set($this->name . 'が叫ぶ！');
@@ -254,7 +253,11 @@ class FlyingMonster extends Monster
 
 class Boss extends Monster
 {
-  //
+  public function sayCry()
+  {
+    History::set($this->name . 'が叫ぶ！');
+    History::set('そんな攻撃ではくらわんぞっ！');
+  }
 }
 
 class God
@@ -336,16 +339,16 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 
 function createMonster()
 {
-  //todo: 4体もんすたーを倒していたらここでモンスターかBOSSを作るか決める
-  // if ($_SESSION['knockDownCount'] >= 4) { 
-  //   if (!mt_rand(0, 5)) { //10分の1の確率で神様を出現させる
-  //     createGod();
-  //   } else {
-  global $monsters;
-  $monster =  $monsters[mt_rand(0, 8)];
-  History::set($monster->getName() . 'が現れた！');
-  $_SESSION['enemy'] =  $monster;
-  unset($_SESSION['god']);
+  if ($_SESSION['knockDownCount'] >= 4) {
+    if (!mt_rand(0, 5)) { //10分の1の確率で神様を出現させる
+      createBoss();
+    }
+  } else {
+    global $monsters;
+    $monster =  $monsters[mt_rand(0, 8)];
+    History::set($monster->getName() . 'が現れた！');
+    $_SESSION['enemy'] =  $monster;
+  }
 }
 function createHuman()
 {
@@ -388,6 +391,7 @@ function decideEnemy() //モンスターか神様を生成させる
   if (!mt_rand(0, 10)) { //10分の1の確率で神様を出現させる
     createGod();
   } else {
+    unset($_SESSION['god']);
     createMonster();
   }
 }
@@ -421,9 +425,6 @@ if (!empty($_POST)) {
 
   error_log(' POSTされた！ ');
 
-  //todo: $_SESSION['knockDownCount']が5回だった場合、モンスター生成にBossを発生させるパターンを作る
-  //todo: それが終わり仕出しSESSION[clear_flg]がある場合はゲームクリアの画面を作る処理へいく
-
   if ($startFlg) {
     History::set(' ゲームスタート！ ');
     init();
@@ -454,7 +455,7 @@ if (!empty($_POST)) {
         // hpが0以下になったら、別のモンスターを出現させる
         if ($_SESSION['enemy']->getHp() <= 0) {
           //enemyがBossクラスだった場合→ゲーム終了へ
-          if (get_class($_SESSION['enemy'] = 'Boss')) {
+          if (get_class($_SESSION['enemy']) == 'Boss') {
             History::set($_SESSION['enemy']->getName() . 'を倒した！<br>ゲームクリア!');
             $_SESSION['clear_flg'] = true;
 
@@ -620,6 +621,10 @@ if (!empty($_POST)) {
         </label>
         <input type="submit" name="start" value="▶ゲームスタート">
       </form>
+    <?php
+  } elseif (!empty($_SESSION['clear_flg'])) { ?>
+      <h2 style="margin-top:60px;">Game cleared</h2>
+      <!-- todo clear_flgでゲームクリア画面を作る -->
     <?php
   } elseif (empty($_SESSION['god'])) { ?>
       <!-- オブジェクトがモンスターorBossだった場合の表示 -->
