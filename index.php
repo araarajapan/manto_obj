@@ -141,6 +141,7 @@ class Human extends Creature
         break;
     }
   }
+
   public function heal()
   {
     $magicPoint = 10;
@@ -155,8 +156,27 @@ class Human extends Creature
   }
 }
 // 魔法使いクラス
-class which extends Human
-{ }
+class Witch extends Human
+{
+  public function attack($targetObj)
+  {
+    $magicPoint = 10;
+    if ($this->mp >= $magicPoint) {
+      History::set('魔法攻撃!');
+      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * mt_rand(0.5, 2);
+      $this->mp -= $magicPoint;
+      if (get_class($targetObj) == 'FlyingMonster') {
+        History::set('効果が抜群!');
+        $attackPoint *= 1.5;
+      }
+      $targetObj->setHp($targetObj->getHp() - $attackPoint);
+      History::set($attackPoint . 'ポイントのダメージ！');
+    } else {
+      History::set('MPが無いので通常攻撃!');
+      parent::attack($targetObj);
+    }
+  }
+}
 // モンスタークラス
 class Monster extends Creature
 {
@@ -287,18 +307,18 @@ class History implements HistoryInterface
 //God($name, $img)
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, URL . 'hero.png', 30, 40, 120);
-$witch = new Witch('魔法使い', Sex::WOMAN, 300, URL . 'witch.png', mt_rand(50, 100), 40, 120);
-$god = new God('神様', URL . 'god.png');
-$monsters[] = new Monster('フランケン', 100, URL . 'monster01.png', 20, 40);
-$monsters[] = new MagicMonster('フランケンNEO', 300, URL . 'monster02.png', 20, 60, mt_rand(50, 100));
-$monsters[] = new Monster('ドラキュリー', 200, URL . 'monster03.png', 30, 50);
-$monsters[] = new MagicMonster('ドラキュラ男爵', 400, URL . 'monster04.png', 50, 80, mt_rand(60, 120));
-$monsters[] = new Monster('スカルフェイス', 150, URL . 'monster05.png', 30, 60);
-$monsters[] = new Monster('毒ハンド', 100, URL . 'monster06.png', 10, 30);
-$monsters[] = new Monster('泥ハンド', 120, URL . 'monster07.png', 20, 30);
-$monsters[] = new Monster('血のハンド', 180, URL . 'monster08.png', 30, 50);
-$monsters[] = new FlyingMonster('見習い魔女', 260, URL . 'monster09.png', 20, 70);
+$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
+$witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
+$god = new God('神様', DIR_IMAGES . 'god.png');
+$monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
+$monsters[] = new MagicMonster('フランケンNEO', 300, DIR_IMAGES . 'monster02.png', 20, 60, mt_rand(50, 100));
+$monsters[] = new Monster('ドラキュリー', 200, DIR_IMAGES . 'monster03.png', 30, 50);
+$monsters[] = new MagicMonster('ドラキュラ男爵', 400, DIR_IMAGES . 'monster04.png', 50, 80, mt_rand(60, 120));
+$monsters[] = new Monster('スカルフェイス', 150, DIR_IMAGES . 'monster05.png', 30, 60);
+$monsters[] = new Monster('毒ハンド', 100, DIR_IMAGES . 'monster06.png', 10, 30);
+$monsters[] = new Monster('泥ハンド', 120, DIR_IMAGES . 'monster07.png', 20, 30);
+$monsters[] = new Monster('血のハンド', 180, DIR_IMAGES . 'monster08.png', 30, 50);
+$monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.png', 20, 70);
 
 function createMonster()
 {
@@ -313,6 +333,11 @@ function createHuman()
   global $human;
   $_SESSION['mainChara'] =  $human;
 }
+function createWitch()
+{
+  global $witch;
+  $_SESSION['mainChara'] =  $witch;
+}
 function createGod()
 {
   global $god;
@@ -320,7 +345,18 @@ function createGod()
   $_SESSION['god'] =  $god;
 }
 
-function decideCreate() //モンスターか神様を生成させる
+function decideCharacter()
+{
+  if ($_POST['chara'] == 'hero') {
+    History::set('勇者が選ばれました');
+    createHuman();
+  } else {
+    History::set('魔法使いが選ばれました');
+    createWitch();
+  }
+}
+
+function decideEnemy() //モンスターか神様を生成させる
 {
   if (!mt_rand(0, 10)) { //10分の1の確率で神様を出現させる
     createGod();
@@ -334,18 +370,20 @@ function init()
   History::clear();
   History::set('初期化します！');
   $_SESSION['knockDownCount'] = 0;
-  createHuman();
+  decideCharacter();
   createMonster();
 }
 function gameOver()
 {
   $_SESSION = array();
+  $_POST = array();
 }
 
 
 //1.post送信されていた場合
 if (!empty($_POST)) {
   $startFlg = (!empty($_POST['start'])) ? true : false;
+  $reStartFlg = (!empty($_POST['reStart'])) ? true : false;
 
   $attackFlg = (!empty($_POST['attack'])) ? true : false;
   $healFlg = (!empty($_POST['heal'])) ? true : false;
@@ -359,6 +397,9 @@ if (!empty($_POST)) {
   if ($startFlg) {
     History::set(' ゲームスタート！ ');
     init();
+  } elseif ($reStartFlg) {
+    History::set(' キャラクターの選択画面に移ります ');
+    gameOver();
   } elseif (empty($_SESSION['god'])) {
     //モンスターの場合の処理
 
@@ -383,7 +424,7 @@ if (!empty($_POST)) {
         // hpが0以下になったら、別のモンスターを出現させる
         if ($_SESSION['monster']->getHp() <= 0) {
           History::set($_SESSION['monster']->getName() . 'を倒した！');
-          decideCreate();
+          decideEnemy();
           $_SESSION['knockDownCount'] = $_SESSION['knockDownCount'] + 1;
         }
       }
@@ -405,7 +446,7 @@ if (!empty($_POST)) {
       }
     } else { //逃げるを押した場合
       History::set('逃げた！');
-      decideCreate();
+      decideEnemy();
     }
   } else {
     //神様の場合の処理
@@ -439,7 +480,7 @@ if (!empty($_POST)) {
     body {
       margin: 0 auto;
       padding: 150px;
-      width: 25%;
+      width: 50%;
       background: #fbfbfa;
       color: white;
     }
@@ -458,6 +499,15 @@ if (!empty($_POST)) {
 
     form {
       overflow: hidden;
+    }
+
+    label img {
+      margin: 3px;
+      padding: 8px;
+    }
+
+    [type="radio"]:checked+label img {
+      background: #FFF100;
     }
 
     input[type="text"] {
@@ -521,10 +571,14 @@ if (!empty($_POST)) {
   <div style="background:black; padding:15px; position:relative;">
     <?php if (empty($_SESSION)) { ?>
       <h2 style="margin-top:60px;">Select Character</h2>
-      <form method="post">
-        <input type="radio" id="hero" name="hero" value="勇者" style="display:none;">
+      <form method="post" style="text-align:center;">
+        <input type="radio" id="hero" name="chara" value="hero" style="display:none;" checked>
         <label for="hero">
-          <img src="<?php echo $human->getImg(); ?>" alt="" style="width:120px; height:auto; margin:20px auto 0 auto; border:1px solid #ffffff; display:block;">
+          <img src="<?php echo $human->getImg(); ?>" alt="" style="width:110px; height:150px; border:1px solid #ffffff; display:inline-block;">
+        </label>
+        <input type="radio" id="witch" name="chara" value="witch" style="display:none;">
+        <label for="witch">
+          <img src="<?php echo $witch->getImg(); ?>" alt="" style="width:110px; height:150px; border:1px solid #ffffff; display:inline-block;">
         </label>
         <input type="submit" name="start" value="▶ゲームスタート">
       </form>
@@ -549,7 +603,7 @@ if (!empty($_POST)) {
         <?php
       } ?>
         <input type="submit" name="escape" value="▶逃げる">
-        <input type="submit" name="start" value="▶ゲームリスタート">
+        <input type="submit" name="reStart" value="▶ゲームリスタート">
       </form>
     <?php
   } else { ?>
