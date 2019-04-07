@@ -9,6 +9,14 @@ const DIR_IMAGES = 'img/';
 
 // モンスター達格納用
 $monsters = array();
+
+//BOSSのHPを作り出す
+if ($_SESSION['knockDownCount'] >= 4) {
+  $bossHP = 500 + ($_SESSION['knockDownCount'] * 10);
+} else {
+  $bossHP = 500;
+}
+
 // 性別クラス
 class Sex
 {
@@ -244,6 +252,11 @@ class FlyingMonster extends Monster
   }
 }
 
+class Boss extends Monster
+{
+  //
+}
+
 class God
 {
   private $name;
@@ -310,6 +323,7 @@ class History implements HistoryInterface
 $human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
 $witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
+$boss = new Boss('魔王', $bossHp, DIR_IMAGES . 'boss.png', 50, 100);
 $monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, DIR_IMAGES . 'monster02.png', 20, 60, mt_rand(50, 100));
 $monsters[] = new Monster('ドラキュリー', 200, DIR_IMAGES . 'monster03.png', 30, 50);
@@ -322,10 +336,15 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 
 function createMonster()
 {
+  //todo: 4体もんすたーを倒していたらここでモンスターかBOSSを作るか決める
+  // if ($_SESSION['knockDownCount'] >= 4) { 
+  //   if (!mt_rand(0, 5)) { //10分の1の確率で神様を出現させる
+  //     createGod();
+  //   } else {
   global $monsters;
   $monster =  $monsters[mt_rand(0, 8)];
   History::set($monster->getName() . 'が現れた！');
-  $_SESSION['monster'] =  $monster;
+  $_SESSION['enemy'] =  $monster;
   unset($_SESSION['god']);
 }
 function createHuman()
@@ -343,6 +362,14 @@ function createGod()
   global $god;
   History::set('あなたを手助けしてくれる' . $god->getName() . 'が現れた！');
   $_SESSION['god'] =  $god;
+}
+
+//BOSSのHPパラメータ作成
+function createBoss()
+{
+  global $boss;
+  History::set('ラスボスの' . $boss->getName() . 'が現れた！');
+  $_SESSION['enemy'] =  $boss;
 }
 
 function decideCharacter()
@@ -394,6 +421,9 @@ if (!empty($_POST)) {
 
   error_log(' POSTされた！ ');
 
+  //todo: $_SESSION['knockDownCount']が5回だった場合、モンスター生成にBossを発生させるパターンを作る
+  //todo: それが終わり仕出しSESSION[clear_flg]がある場合はゲームクリアの画面を作る処理へいく
+
   if ($startFlg) {
     History::set(' ゲームスタート！ ');
     init();
@@ -409,12 +439,12 @@ if (!empty($_POST)) {
 
       // モンスターに攻撃を与える
       History::set($_SESSION['mainChara']->getName() . 'の攻撃！');
-      $_SESSION['mainChara']->attack($_SESSION['monster']);
-      $_SESSION['monster']->sayCry();
+      $_SESSION['mainChara']->attack($_SESSION['enemy']);
+      $_SESSION['enemy']->sayCry();
 
       // モンスターが攻撃をする
-      History::set($_SESSION['monster']->getName() . 'の攻撃！');
-      $_SESSION['monster']->attack($_SESSION['mainChara']);
+      History::set($_SESSION['enemy']->getName() . 'の攻撃！');
+      $_SESSION['enemy']->attack($_SESSION['mainChara']);
       $_SESSION['mainChara']->sayCry();
 
       // 自分のhpが0以下になったらゲームオーバー
@@ -422,10 +452,18 @@ if (!empty($_POST)) {
         gameOver();
       } else {
         // hpが0以下になったら、別のモンスターを出現させる
-        if ($_SESSION['monster']->getHp() <= 0) {
-          History::set($_SESSION['monster']->getName() . 'を倒した！');
-          decideEnemy();
-          $_SESSION['knockDownCount'] = $_SESSION['knockDownCount'] + 1;
+        if ($_SESSION['enemy']->getHp() <= 0) {
+          //enemyがBossクラスだった場合→ゲーム終了へ
+          if (get_class($_SESSION['enemy'] = 'Boss')) {
+            History::set($_SESSION['enemy']->getName() . 'を倒した！<br>ゲームクリア!');
+            $_SESSION['clear_flg'] = true;
+
+            //enemyがMonsterクラスだった場合→次の戦闘へ  
+          } else {
+            History::set($_SESSION['enemy']->getName() . 'を倒した！');
+            $_SESSION['knockDownCount'] = $_SESSION['knockDownCount'] + 1;
+            decideEnemy();
+          }
         }
       }
     } elseif ($healFlg) {
@@ -436,8 +474,8 @@ if (!empty($_POST)) {
       $_SESSION['mainChara']->sayMsg();
 
       // モンスターが攻撃をする
-      History::set($_SESSION['monster']->getName() . 'の攻撃！');
-      $_SESSION['monster']->attack($_SESSION['mainChara']);
+      History::set($_SESSION['enemy']->getName() . 'の攻撃！');
+      $_SESSION['enemy']->attack($_SESSION['mainChara']);
       $_SESSION['mainChara']->sayCry();
 
       // 自分のhpが0以下になったらゲームオーバー
@@ -584,12 +622,12 @@ if (!empty($_POST)) {
       </form>
     <?php
   } elseif (empty($_SESSION['god'])) { ?>
-      <!-- オブジェクトがモンスターだった場合の表示 -->
-      <h2><?php echo $_SESSION['monster']->getName() . ' が現れた !!'; ?></h2>
+      <!-- オブジェクトがモンスターorBossだった場合の表示 -->
+      <h2><?php echo $_SESSION['enemy']->getName() . ' が現れた !!'; ?></h2>
       <div style="height: 150px;">
-        <img src="<?php echo $_SESSION['monster']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
+        <img src="<?php echo $_SESSION['enemy']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
       </div>
-      <p style="font-size:14px; text-align:center;">モンスターのHP：<?php echo $_SESSION['monster']->getHp(); ?></p>
+      <p style="font-size:14px; text-align:center;">モンスターのHP：<?php echo $_SESSION['enemy']->getHp(); ?></p>
       <p>倒したモンスター数：<?php echo $_SESSION['knockDownCount']; ?></p>
       <p><?php echo $_SESSION['mainChara']->getName() ?>の残りHP：<?php echo $_SESSION['mainChara']->getHp(); ?></p>
       <p><?php echo $_SESSION['mainChara']->getName() ?>の残りMP：<?php echo $_SESSION['mainChara']->getMp(); ?></p>
