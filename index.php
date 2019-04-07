@@ -9,6 +9,14 @@ const DIR_IMAGES = 'img/';
 
 // モンスター達格納用
 $monsters = array();
+
+// MPクラス //test
+// class Mp
+// {
+//   public static $heroMP = 30;
+//   public static $witchMP = mt_rand(50, 100);
+// }
+
 // 性別クラス
 class Sex
 {
@@ -21,7 +29,7 @@ abstract class Creature
 {
   protected $name;
   protected $hp;
-  protected $img;
+  private $img;
   protected $attackMin;
   protected $attackMax;
   abstract public function sayCry();
@@ -49,7 +57,7 @@ abstract class Creature
   {
     $attackPoint = mt_rand($this->attackMin, $this->attackMax);
     if (!mt_rand(0, 9)) { //10分の1の確率でクリティカル
-      $attackPoint = $attackPoint * 1.5;
+      $attackPoint = floor($attackPoint * 1.5);
       $attackPoint = (int)$attackPoint;
       History::set($this->getName() . 'のクリティカルヒット!!');
     }
@@ -161,13 +169,17 @@ class Witch extends Human
   public function attack($targetObj)
   {
     $magicPoint = 10;
-    if ($this->mp >= $magicPoint) {
+    if ($this->mp >= $magicPoint && !mt_rand(0, 2)) {
       History::set('魔法攻撃!');
-      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * mt_rand(0.5, 2);
+      $random_num = mt_rand(5, 20) / 10;
+      error_log('random_numの値:' . $random_num); //test
+      $attackPoint = floor(mt_rand($this->attackMin, $this->attackMax) * $random_num);
+      error_log('attackPointの値:' . $attackPoint); //test
       $this->mp -= $magicPoint;
       if (get_class($targetObj) == 'FlyingMonster') {
         History::set('効果が抜群!');
         $attackPoint *= 1.5;
+        floor($attackPoint);
       }
       $targetObj->setHp($targetObj->getHp() - $attackPoint);
       History::set($attackPoint . 'ポイントのダメージ！');
@@ -504,6 +516,10 @@ if (!empty($_POST)) {
     label img {
       margin: 3px;
       padding: 8px;
+    }
+
+    label img:hover {
+      cursor: pointer;
     }
 
     [type="radio"]:checked+label img {
