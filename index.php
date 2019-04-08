@@ -10,11 +10,6 @@ const DIR_IMAGES = 'img/';
 // モンスター達格納用
 $monsters = array();
 
-//BOSSのHPを作り出す
-if (!empty($_SESSION['knockDownCount'])) {
-  $bossHp = 500 + ($_SESSION['knockDownCount'] * 10);
-}
-
 // 性別クラス
 class Sex
 {
@@ -324,7 +319,7 @@ class History implements HistoryInterface
 $human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
 $witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
-$boss = new Boss('魔王', $bossHp, DIR_IMAGES . 'boss.png', 50, 100);
+$boss = new Boss('魔王', 500, DIR_IMAGES . 'boss.png', 50, 100);
 $monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, DIR_IMAGES . 'monster02.png', 20, 60, mt_rand(50, 100));
 $monsters[] = new Monster('ドラキュリー', 200, DIR_IMAGES . 'monster03.png', 30, 50);
@@ -337,7 +332,8 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 
 function createMonster()
 {
-  unset($_SESSION['god']);
+  unset($_SESSION['god']); //gotオブジェクトを削除しておく
+
   if ($_SESSION['knockDownCount'] >= 4) { //4体倒していたらBOSSをランダムで生成させる
     if (!mt_rand(0, 3)) { //3分の1の確率でBOSSを出現させる
       createBoss();
@@ -370,6 +366,8 @@ function createGod()
 function createBoss()
 {
   global $boss;
+  //BOSSのHPを倒したモンスター数で変化させる
+  $boss->setHp($boss->getHp() + ($_SESSION['knockDownCount'] * 10));
   History::set('ラスボスの' . $boss->getName() . 'が現れた！');
   $_SESSION['enemy'] =  $boss;
 }
