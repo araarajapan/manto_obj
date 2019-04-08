@@ -323,7 +323,7 @@ class History implements HistoryInterface
 //God($name, $img)
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
+$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 200, 400); //test 200 400
 $witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
 $boss = new Boss('魔王', $bossHp, DIR_IMAGES . 'boss.png', 50, 100);
@@ -339,8 +339,8 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 
 function createMonster()
 {
-  if ($_SESSION['knockDownCount'] >= 4) {
-    if (!mt_rand(0, 5)) { //10分の1の確率で神様を出現させる
+  if ($_SESSION['knockDownCount'] >= 2) { //test4
+    if (!mt_rand(0, 1)) { //5分の1の確率で神様を出現させる //test 0,5
       createBoss();
     }
   } else {
@@ -624,6 +624,9 @@ if (!empty($_POST)) {
     <?php
   } elseif (!empty($_SESSION['clear_flg'])) { ?>
       <h2 style="margin-top:60px;">Game cleared</h2>
+      <form method="post">
+        <input type="submit" name="reStart" value="▶ゲームリスタート">
+      </form>
       <!-- todo clear_flgでゲームクリア画面を作る -->
     <?php
   } elseif (empty($_SESSION['god'])) { ?>
@@ -639,7 +642,7 @@ if (!empty($_POST)) {
       <form method="post">
         <input type="submit" name="attack" value="▶攻撃する">
         <?php if ($_SESSION['mainChara']->getMp() >= 1) { ?>
-          <input type="submit" name="heal" value="▶回復する(mp:1)">
+          <input type="submit" name="heal" value="▶回復する(mp:10)">
         <?php
       } else { ?>
           <input type="submit" name="heal" value="▶回復する(mp不足)" class="btn-short" disabled>
