@@ -246,6 +246,12 @@ class FlyingMonster extends Monster
 
 class Boss extends Monster
 {
+  function __construct($name, $hp, $img, $attackMin, $attackMax)
+  {
+    parent::__construct($name, $hp, $img, $attackMin, $attackMax);
+    $this->hp = 500 + ($_SESSION['knockDownCount'] * 10);
+  }
+
   public function sayCry()
   {
     History::set($this->name . 'が叫ぶ！');
@@ -314,6 +320,7 @@ class History implements HistoryInterface
 // インスタンス生成
 //Human($name, $sex, $hp, $img, $mp, $attackMin, $attackMax)
 //God($name, $img)
+//Boss($name, $hp, $img,$attackMin, $attackMax)
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
 $human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
@@ -333,7 +340,6 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 function createMonster()
 {
   unset($_SESSION['god']); //gotオブジェクトを削除しておく
-
   if ($_SESSION['knockDownCount'] >= 4) { //4体倒していたらBOSSをランダムで生成させる
     if (!mt_rand(0, 3)) { //3分の1の確率でBOSSを出現させる
       createBoss();
@@ -366,8 +372,6 @@ function createGod()
 function createBoss()
 {
   global $boss;
-  //BOSSのHPを倒したモンスター数で変化させる
-  $boss->setHp($boss->getHp() + ($_SESSION['knockDownCount'] * 10));
   History::set('ラスボスの' . $boss->getName() . 'が現れた！');
   $_SESSION['enemy'] =  $boss;
 }
