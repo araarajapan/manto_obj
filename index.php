@@ -10,13 +10,6 @@ const DIR_IMAGES = 'img/';
 // モンスター達格納用
 $monsters = array();
 
-// MPクラス //test
-// class Mp
-// {
-//   public static $heroMP = 30;
-//   public static $witchMP = mt_rand(50, 100);
-// }
-
 // 性別クラス
 class Sex
 {
@@ -58,7 +51,6 @@ abstract class Creature
     $attackPoint = mt_rand($this->attackMin, $this->attackMax);
     if (!mt_rand(0, 9)) { //10分の1の確率でクリティカル
       $attackPoint = floor($attackPoint * 1.5);
-      $attackPoint = (int)$attackPoint;
       History::set($this->getName() . 'のクリティカルヒット!!');
     }
     $targetObj->setHp($targetObj->getHp() - $attackPoint);
@@ -75,6 +67,7 @@ class Human extends Creature
   protected $sex;
   protected $mp;
   protected $maxHp;
+  protected static $magicPoint = 10;
 
   public function __construct($name, $sex, $hp, $img, $attackMin, $attackMax)
   {
@@ -120,6 +113,10 @@ class Human extends Creature
   {
     return $this->maxHp;
   }
+  public function getMagicPoint()
+  {
+    return self::$magicPoint;
+  }
   public function sayCry()
   {
     History::set($this->name . 'が叫ぶ！');
@@ -152,14 +149,13 @@ class Human extends Creature
 
   public function heal()
   {
-    $magicPoint = 10;
     $healPoint = mt_rand(Human::HEALMIN, Human::HEALMAX);
     if (($this->getHp() + $healPoint) > $this->maxHp) {
       $healPoint = $healPoint - (($this->getHp() + $healPoint) - $this->maxHp);
     }
 
     $this->setHp($this->getHp() + $healPoint);
-    $this->mp -= $magicPoint;
+    $this->mp -= self::$magicPoint;
     History::set($healPoint . 'ポイントの回復！');
   }
 }
@@ -175,23 +171,20 @@ class Witch extends Human
 
   public function attack($targetObj)
   {
-    $magicPoint = 10;
-    if ($this->mp >= $magicPoint && !mt_rand(0, 2)) {
+    if ($this->mp >= self::$magicPoint && !mt_rand(0, 2)) {
       History::set('魔法攻撃!');
       $random_num = mt_rand(5, 20) / 10;
-      error_log('random_numの値:' . $random_num); //test
       $attackPoint = floor(mt_rand($this->attackMin, $this->attackMax) * $random_num);
-      error_log('attackPointの値:' . $attackPoint); //test
-      $this->mp -= $magicPoint;
+      $this->mp -= self::$magicPoint;
       if (get_class($targetObj) == 'FlyingMonster') {
         History::set('効果が抜群!');
         $attackPoint *= 1.5;
-        floor($attackPoint);
+        $attackPoint = floor($attackPoint);
       }
       $targetObj->setHp($targetObj->getHp() - $attackPoint);
       History::set($attackPoint . 'ポイントのダメージ！');
     } else {
-      History::set('MPが無いので通常攻撃!');
+      History::set('通常攻撃!');
       parent::attack($targetObj);
     }
   }
@@ -247,7 +240,7 @@ class FlyingMonster extends Monster
     if (!mt_rand(0, 2)) { //3分の1の確率で空を飛ぶ攻撃
 
       //空を飛ぶ攻撃の場合、パラメータを1.2倍
-      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * 1.2;
+      $attackPoint = floor(mt_rand($this->attackMin, $this->attackMax) * 1.2);
 
       //空を飛ぶ攻撃は自爆ダメージあり
       $reactionPoint = 20;
@@ -618,8 +611,8 @@ if (!empty($_POST)) {
       <p><?php echo $_SESSION['mainChara']->getName() ?>の残りMP：<?php echo $_SESSION['mainChara']->getMp(); ?></p>
       <form method="post">
         <input type="submit" name="attack" value="▶攻撃する">
-        <?php if ($_SESSION['mainChara']->getMp() >= 1) { ?>
-          <input type="submit" name="heal" value="▶回復する(mp:1)">
+        <?php if ($_SESSION['mainChara']->getMp() >= $_SESSION['mainChara']->getMagicPoint()) { ?>
+          <input type="submit" name="heal" value="▶回復する(mp:<?php echo $_SESSION['mainChara']->getMagicPoint() ?>)">
         <?php
       } else { ?>
           <input type="submit" name="heal" value="▶回復する(mp不足)" class="btn-short" disabled>
