@@ -11,10 +11,8 @@ const DIR_IMAGES = 'img/';
 $monsters = array();
 
 //BOSSのHPを作り出す
-if ($_SESSION['knockDownCount'] >= 4) {
+if (!empty($_SESSION['knockDownCount'])) {
   $bossHp = 500 + ($_SESSION['knockDownCount'] * 10);
-} else {
-  $bossHp = 500;
 }
 
 // 性別クラス
@@ -323,7 +321,7 @@ class History implements HistoryInterface
 //God($name, $img)
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 200, 400); //test 200 400
+$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
 $witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
 $boss = new Boss('魔王', $bossHp, DIR_IMAGES . 'boss.png', 50, 100);
@@ -339,8 +337,9 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 
 function createMonster()
 {
-  if ($_SESSION['knockDownCount'] >= 2) { //test4
-    if (!mt_rand(0, 1)) { //5分の1の確率で神様を出現させる //test 0,5
+  unset($_SESSION['god']);
+  if ($_SESSION['knockDownCount'] >= 4) { //4体倒していたらBOSSをランダムで生成させる
+    if (!mt_rand(0, 3)) { //3分の1の確率でBOSSを出現させる
       createBoss();
     }
   } else {
@@ -391,7 +390,6 @@ function decideEnemy() //モンスターか神様を生成させる
   if (!mt_rand(0, 10)) { //10分の1の確率で神様を出現させる
     createGod();
   } else {
-    unset($_SESSION['god']);
     createMonster();
   }
 }
