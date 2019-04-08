@@ -29,7 +29,7 @@ abstract class Creature
 {
   protected $name;
   protected $hp;
-  private $img;
+  protected $img;
   protected $attackMin;
   protected $attackMax;
   abstract public function sayCry();
@@ -76,16 +76,16 @@ class Human extends Creature
   protected $mp;
   protected $maxHp;
 
-  public function __construct($name, $sex, $hp, $img, $mp, $attackMin, $attackMax)
+  public function __construct($name, $sex, $hp, $img, $attackMin, $attackMax)
   {
     $this->name = $name;
     $this->sex = $sex;
     $this->hp = $hp;
     $this->img = $img;
-    $this->maxHp = $hp;
-    $this->mp = $mp;
     $this->attackMin = $attackMin;
     $this->attackMax = $attackMax;
+    $this->mp = 30;
+    $this->maxHp = $hp;
   }
   public function setSex($num)
   {
@@ -166,6 +166,13 @@ class Human extends Creature
 // 魔法使いクラス
 class Witch extends Human
 {
+
+  function __construct($name, $sex, $hp, $img, $attackMin, $attackMax)
+  {
+    parent::__construct($name, $sex, $hp, $img, $attackMin, $attackMax);
+    $this->mp = mt_rand(50, 100);
+  }
+
   public function attack($targetObj)
   {
     $magicPoint = 10;
@@ -315,12 +322,12 @@ class History implements HistoryInterface
 }
 
 // インスタンス生成
-//Human($name, $sex, $hp, $img, $mp, $attackMin, $attackMax)
+//Human($name, $sex, $hp, $img,$attackMin, $attackMax)
 //God($name, $img)
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
-$witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
+$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 40, 120);
+$witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
 $monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, DIR_IMAGES . 'monster02.png', 20, 60, mt_rand(50, 100));
