@@ -22,7 +22,7 @@ abstract class Creature
 {
   protected $name;
   protected $hp;
-  private $img;
+  protected $img;
   protected $attackMin;
   protected $attackMax;
   abstract public function sayCry();
