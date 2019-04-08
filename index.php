@@ -249,7 +249,9 @@ class Boss extends Monster
   function __construct($name, $hp, $img, $attackMin, $attackMax)
   {
     parent::__construct($name, $hp, $img, $attackMin, $attackMax);
-    $this->hp = 500 + ($_SESSION['knockDownCount'] * 10);
+    if (!empty($_SESSION['knockDownCount'])) {
+      $this->hp = 500 + ($_SESSION['knockDownCount'] * 10);
+    }
   }
 
   public function sayCry()
@@ -340,10 +342,8 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 function createMonster()
 {
   unset($_SESSION['god']); //gotオブジェクトを削除しておく
-  if ($_SESSION['knockDownCount'] >= 4) { //4体倒していたらBOSSをランダムで生成させる
-    if (!mt_rand(0, 3)) { //3分の1の確率でBOSSを出現させる
-      createBoss();
-    }
+  if ($_SESSION['knockDownCount'] >= 4 && !mt_rand(0, 3)) { //4体倒している かつ 3分の1の確率でBOSSをランダムで生成させる
+    createBoss();
   } else {
     global $monsters;
     $monster =  $monsters[mt_rand(0, 8)];
