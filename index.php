@@ -63,11 +63,11 @@ class Human extends Creature
   //回復のパラメータをクラス定数としてセット
   const HEALMIN = 10;
   const HEALMAX = 100;
+  const MAGICPOINT = 10;
 
   protected $sex;
   protected $mp;
   protected $maxHp;
-  protected static $magicPoint = 10;
 
   public function __construct($name, $sex, $hp, $img, $attackMin, $attackMax)
   {
@@ -115,7 +115,7 @@ class Human extends Creature
   }
   public function getMagicPoint()
   {
-    return self::$magicPoint;
+    return self::MAGICPOINT;
   }
   public function sayCry()
   {
@@ -155,7 +155,7 @@ class Human extends Creature
     }
 
     $this->setHp($this->getHp() + $healPoint);
-    $this->mp -= self::$magicPoint;
+    $this->mp -= self::MAGICPOINT;
     History::set($healPoint . 'ポイントの回復！');
   }
 }
@@ -171,11 +171,11 @@ class Witch extends Human
 
   public function attack($targetObj)
   {
-    if ($this->mp >= self::$magicPoint && !mt_rand(0, 2)) {
+    if ($this->mp >= self::MAGICPOINT && !mt_rand(0, 2)) {
       History::set('魔法攻撃!');
       $random_num = mt_rand(5, 20) / 10;
       $attackPoint = floor(mt_rand($this->attackMin, $this->attackMax) * $random_num);
-      $this->mp -= self::$magicPoint;
+      $this->mp -= self::MAGICPOINT;
       if (get_class($targetObj) == 'FlyingMonster') {
         History::set('効果が抜群!');
         $attackPoint *= 1.5;
