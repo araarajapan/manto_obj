@@ -244,6 +244,7 @@ class FlyingMonster extends Monster
   }
 }
 
+//todo:コンストラクタの受け方が謎(hp、attackMin、attackMax設定を消すとエラーが出る)
 class Boss extends Monster
 {
   function __construct($name, $hp, $img, $attackMin, $attackMax)
