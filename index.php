@@ -245,14 +245,17 @@ class FlyingMonster extends Monster
 }
 
 //todo:コンストラクタの受け方が謎(hp、attackMin、attackMax設定を消すとエラーが出る)
+//やれることは一緒なのでモンスターを継承
+//Bossの仕様はBossのクラスだけに依存できる仕様にしたい。
+
 class Boss extends Monster
 {
-  function __construct($name, $hp, $img, $attackMin, $attackMax)
+  function __construct($name, $img, $attackMin, $attackMax)
   {
-    parent::__construct($name, $hp, $img, $attackMin, $attackMax);
     if (!empty($_SESSION['knockDownCount'])) {
-      $this->hp = 500 + ($_SESSION['knockDownCount'] * 10);
+      $bossHp = 500 + ($_SESSION['knockDownCount'] * 10);
     }
+    parent::__construct($name, $bossHp, $img, $attackMin, $attackMax);
   }
 
   public function sayCry()
@@ -329,7 +332,7 @@ class History implements HistoryInterface
 $human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
 $witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
-$boss = new Boss('魔王', 500, DIR_IMAGES . 'boss.png', 50, 100);
+$boss = new Boss('魔王', DIR_IMAGES . 'boss.png', 50, 100);
 $monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, DIR_IMAGES . 'monster02.png', 20, 60, mt_rand(50, 100));
 $monsters[] = new Monster('ドラキュリー', 200, DIR_IMAGES . 'monster03.png', 30, 50);
@@ -372,6 +375,7 @@ function createGod()
 //BOSSのHPパラメータ作成
 function createBoss()
 {
+  //Todo:Bossのインスタンスはこのタイミングで生成する
   global $boss;
   History::set('ラスボスの' . $boss->getName() . 'が現れた！');
   $_SESSION['enemy'] =  $boss;
