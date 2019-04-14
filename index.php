@@ -63,7 +63,7 @@ class Human extends Creature
   //回復のパラメータをクラス定数としてセット
   const HEALMIN = 10;
   const HEALMAX = 100;
-  const MAGICPOINT = 10;
+  const MPCOST = 10;
 
   protected $sex;
   protected $mp;
@@ -113,9 +113,10 @@ class Human extends Creature
   {
     return $this->maxHp;
   }
-  public function getMagicPoint()
+  // 消費MPをゲッターとして返す(クラス固有として定義してるのでインスタンスではなくstatic化)
+  public static function getMpCost()
   {
-    return self::MAGICPOINT;
+    return self::MPCOST;
   }
   public function sayCry()
   {
@@ -155,7 +156,7 @@ class Human extends Creature
     }
 
     $this->setHp($this->getHp() + $healPoint);
-    $this->mp -= self::MAGICPOINT;
+    $this->mp -= self::MPCOST;
     History::set($healPoint . 'ポイントの回復！');
   }
 }
@@ -171,11 +172,11 @@ class Witch extends Human
 
   public function attack($targetObj)
   {
-    if ($this->mp >= self::MAGICPOINT && !mt_rand(0, 2)) {
+    if ($this->mp >= self::MPCOST && !mt_rand(0, 2)) {
       History::set('魔法攻撃!');
       $random_num = mt_rand(5, 20) / 10;
       $attackPoint = floor(mt_rand($this->attackMin, $this->attackMax) * $random_num);
-      $this->mp -= self::MAGICPOINT;
+      $this->mp -= self::MPCOST;
       if (get_class($targetObj) == 'FlyingMonster') {
         History::set('効果が抜群!');
         $attackPoint *= 1.5;
@@ -611,8 +612,8 @@ if (!empty($_POST)) {
       <p><?php echo $_SESSION['mainChara']->getName() ?>の残りMP：<?php echo $_SESSION['mainChara']->getMp(); ?></p>
       <form method="post">
         <input type="submit" name="attack" value="▶攻撃する">
-        <?php if ($_SESSION['mainChara']->getMp() >= $_SESSION['mainChara']->getMagicPoint()) { ?>
-          <input type="submit" name="heal" value="▶回復する(mp:<?php echo $_SESSION['mainChara']->getMagicPoint() ?>)">
+        <?php if ($_SESSION['mainChara']->getMp() >= $_SESSION['mainChara']::getMpCost()) { ?>
+          <input type="submit" name="heal" value="▶回復する(mp:<?php echo $_SESSION['mainChara']::getMpCost() ?>)">
         <?php
       } else { ?>
           <input type="submit" name="heal" value="▶回復する(mp不足)" class="btn-short" disabled>
