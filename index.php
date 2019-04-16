@@ -202,7 +202,6 @@ class Monster extends Creature
     $this->attackMin = $attackMin;
     $this->attackMax = $attackMax;
   }
-  // ゲッター
   public function sayCry()
   {
     History::set($this->name . 'が叫ぶ！');
@@ -254,6 +253,28 @@ class FlyingMonster extends Monster
     } else {
       parent::attack($targetObj);
     }
+  }
+}
+
+class Boss extends Monster
+{
+  function __construct($name, $img)
+  {
+    //Boss固有のHPを設定
+    $bossHp = 500 + ($_SESSION['knockDownCount'] * 10);
+
+    //Boss固有の攻撃力を設定
+    $bossAttackMin = 50;
+    $bossAttackMax = 80;
+
+    //その他のパラメータは親クラスと同様に初期化する
+    parent::__construct($name, $bossHp, $img, $bossAttackMin, $bossAttackMax);
+  }
+
+  public function sayCry()
+  {
+    History::set($this->name . 'が叫ぶ！');
+    History::set('そんな攻撃ではくらわんぞっ！');
   }
 }
 
@@ -318,6 +339,7 @@ class History implements HistoryInterface
 // インスタンス生成
 //Human($name, $sex, $hp, $img,$attackMin, $attackMax)
 //God($name, $img)
+//Boss($name,$img):createBoss()のタイミングで生成
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
 $human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 40, 120);
@@ -335,11 +357,15 @@ $monsters[] = new FlyingMonster('見習い魔女', 260, DIR_IMAGES . 'monster09.
 
 function createMonster()
 {
-  global $monsters;
-  $monster =  $monsters[mt_rand(0, 8)];
-  History::set($monster->getName() . 'が現れた！');
-  $_SESSION['monster'] =  $monster;
-  unset($_SESSION['god']);
+  unset($_SESSION['god']); //gotオブジェクトを削除しておく
+  if ($_SESSION['knockDownCount'] >= 4 && !mt_rand(0, 3)) { //4体倒している かつ 3分の1の確率でBOSSをランダムで生成させる
+    createBoss();
+  } else {
+    global $monsters;
+    $monster =  $monsters[mt_rand(0, 8)];
+    History::set($monster->getName() . 'が現れた！');
+    $_SESSION['enemy'] =  $monster;
+  }
 }
 function createHuman()
 {
@@ -356,6 +382,14 @@ function createGod()
   global $god;
   History::set('あなたを手助けしてくれる' . $god->getName() . 'が現れた！');
   $_SESSION['god'] =  $god;
+}
+
+function createBoss()
+{
+  $boss = new Boss('魔王', DIR_IMAGES . 'boss.png');
+
+  History::set('ラスボスの' . $boss->getName() . 'が現れた！');
+  $_SESSION['enemy'] =  $boss;
 }
 
 function decideCharacter()
@@ -422,12 +456,12 @@ if (!empty($_POST)) {
 
       // モンスターに攻撃を与える
       History::set($_SESSION['mainChara']->getName() . 'の攻撃！');
-      $_SESSION['mainChara']->attack($_SESSION['monster']);
-      $_SESSION['monster']->sayCry();
+      $_SESSION['mainChara']->attack($_SESSION['enemy']);
+      $_SESSION['enemy']->sayCry();
 
       // モンスターが攻撃をする
-      History::set($_SESSION['monster']->getName() . 'の攻撃！');
-      $_SESSION['monster']->attack($_SESSION['mainChara']);
+      History::set($_SESSION['enemy']->getName() . 'の攻撃！');
+      $_SESSION['enemy']->attack($_SESSION['mainChara']);
       $_SESSION['mainChara']->sayCry();
 
       // 自分のhpが0以下になったらゲームオーバー
@@ -435,10 +469,18 @@ if (!empty($_POST)) {
         gameOver();
       } else {
         // hpが0以下になったら、別のモンスターを出現させる
-        if ($_SESSION['monster']->getHp() <= 0) {
-          History::set($_SESSION['monster']->getName() . 'を倒した！');
-          decideEnemy();
-          $_SESSION['knockDownCount'] = $_SESSION['knockDownCount'] + 1;
+        if ($_SESSION['enemy']->getHp() <= 0) {
+          //enemyがBossクラスだった場合→ゲーム終了へ
+          if (get_class($_SESSION['enemy']) == 'Boss') {
+            History::set($_SESSION['enemy']->getName() . 'を倒した！<br>ゲームクリア!');
+            $_SESSION['clear_flg'] = true;
+
+            //enemyがMonsterクラスだった場合→次の戦闘へ  
+          } else {
+            History::set($_SESSION['enemy']->getName() . 'を倒した！');
+            $_SESSION['knockDownCount'] = $_SESSION['knockDownCount'] + 1;
+            decideEnemy();
+          }
         }
       }
     } elseif ($healFlg) {
@@ -449,8 +491,8 @@ if (!empty($_POST)) {
       $_SESSION['mainChara']->sayMsg();
 
       // モンスターが攻撃をする
-      History::set($_SESSION['monster']->getName() . 'の攻撃！');
-      $_SESSION['monster']->attack($_SESSION['mainChara']);
+      History::set($_SESSION['enemy']->getName() . 'の攻撃！');
+      $_SESSION['enemy']->attack($_SESSION['mainChara']);
       $_SESSION['mainChara']->sayCry();
 
       // 自分のhpが0以下になったらゲームオーバー
@@ -600,13 +642,20 @@ if (!empty($_POST)) {
         <input type="submit" name="start" value="▶ゲームスタート">
       </form>
     <?php
+  } elseif (!empty($_SESSION['clear_flg'])) { ?>
+      <h2 style="margin-top:60px;">Game cleared</h2>
+      <form method="post">
+        <input type="submit" name="reStart" value="▶ゲームリスタート">
+      </form>
+      <!-- todo clear_flgでゲームクリア画面を作る -->
+    <?php
   } elseif (empty($_SESSION['god'])) { ?>
-      <!-- オブジェクトがモンスターだった場合の表示 -->
-      <h2><?php echo $_SESSION['monster']->getName() . ' が現れた !!'; ?></h2>
+      <!-- オブジェクトがモンスターorBossだった場合の表示 -->
+      <h2><?php echo $_SESSION['enemy']->getName() . ' が現れた !!'; ?></h2>
       <div style="height: 150px;">
-        <img src="<?php echo $_SESSION['monster']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
+        <img src="<?php echo $_SESSION['enemy']->getImg(); ?>" style="width:120px; height:auto; margin:40px auto 0 auto; display:block;">
       </div>
-      <p style="font-size:14px; text-align:center;">モンスターのHP：<?php echo $_SESSION['monster']->getHp(); ?></p>
+      <p style="font-size:14px; text-align:center;">モンスターのHP：<?php echo $_SESSION['enemy']->getHp(); ?></p>
       <p>倒したモンスター数：<?php echo $_SESSION['knockDownCount']; ?></p>
       <p><?php echo $_SESSION['mainChara']->getName() ?>の残りHP：<?php echo $_SESSION['mainChara']->getHp(); ?></p>
       <p><?php echo $_SESSION['mainChara']->getName() ?>の残りMP：<?php echo $_SESSION['mainChara']->getMp(); ?></p>
