@@ -50,8 +50,7 @@ abstract class Creature
   {
     $attackPoint = mt_rand($this->attackMin, $this->attackMax);
     if (!mt_rand(0, 9)) { //10分の1の確率でクリティカル
-      $attackPoint = $attackPoint * 1.5;
-      $attackPoint = (int)$attackPoint;
+      $attackPoint = floor($attackPoint * 1.5);
       History::set($this->getName() . 'のクリティカルヒット!!');
     }
     $targetObj->setHp($targetObj->getHp() - $attackPoint);
@@ -64,21 +63,22 @@ class Human extends Creature
   //回復のパラメータをクラス定数としてセット
   const HEALMIN = 10;
   const HEALMAX = 100;
+  const MPCOST = 10;
 
   protected $sex;
   protected $mp;
   protected $maxHp;
 
-  public function __construct($name, $sex, $hp, $img, $mp, $attackMin, $attackMax)
+  public function __construct($name, $sex, $hp, $img, $attackMin, $attackMax)
   {
     $this->name = $name;
     $this->sex = $sex;
     $this->hp = $hp;
     $this->img = $img;
-    $this->maxHp = $hp;
-    $this->mp = $mp;
     $this->attackMin = $attackMin;
     $this->attackMax = $attackMax;
+    $this->mp = 30;
+    $this->maxHp = $hp;
   }
   public function setSex($num)
   {
@@ -113,6 +113,11 @@ class Human extends Creature
   {
     return $this->maxHp;
   }
+  // 消費MPをゲッターとして返す(クラス固有として定義してるのでインスタンスではなくstatic化)
+  public static function getMpCost()
+  {
+    return self::MPCOST;
+  }
   public function sayCry()
   {
     History::set($this->name . 'が叫ぶ！');
@@ -145,35 +150,42 @@ class Human extends Creature
 
   public function heal()
   {
-    $magicPoint = 10;
     $healPoint = mt_rand(Human::HEALMIN, Human::HEALMAX);
     if (($this->getHp() + $healPoint) > $this->maxHp) {
       $healPoint = $healPoint - (($this->getHp() + $healPoint) - $this->maxHp);
     }
 
     $this->setHp($this->getHp() + $healPoint);
-    $this->mp -= $magicPoint;
+    $this->mp -= self::MPCOST;
     History::set($healPoint . 'ポイントの回復！');
   }
 }
 // 魔法使いクラス
 class Witch extends Human
 {
+
+  function __construct($name, $sex, $hp, $img, $attackMin, $attackMax)
+  {
+    parent::__construct($name, $sex, $hp, $img, $attackMin, $attackMax);
+    $this->mp = mt_rand(50, 100);
+  }
+
   public function attack($targetObj)
   {
-    $magicPoint = 10;
-    if ($this->mp >= $magicPoint) {
+    if ($this->mp >= self::MPCOST && !mt_rand(0, 2)) {
       History::set('魔法攻撃!');
-      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * mt_rand(0.5, 2);
-      $this->mp -= $magicPoint;
+      $random_num = mt_rand(5, 20) / 10;
+      $attackPoint = floor(mt_rand($this->attackMin, $this->attackMax) * $random_num);
+      $this->mp -= self::MPCOST;
       if (get_class($targetObj) == 'FlyingMonster') {
         History::set('効果が抜群!');
         $attackPoint *= 1.5;
+        $attackPoint = floor($attackPoint);
       }
       $targetObj->setHp($targetObj->getHp() - $attackPoint);
       History::set($attackPoint . 'ポイントのダメージ！');
     } else {
-      History::set('MPが無いので通常攻撃!');
+      History::set('通常攻撃!');
       parent::attack($targetObj);
     }
   }
@@ -228,7 +240,7 @@ class FlyingMonster extends Monster
     if (!mt_rand(0, 2)) { //3分の1の確率で空を飛ぶ攻撃
 
       //空を飛ぶ攻撃の場合、パラメータを1.2倍
-      $attackPoint = mt_rand($this->attackMin, $this->attackMax) * 1.2;
+      $attackPoint = floor(mt_rand($this->attackMin, $this->attackMax) * 1.2);
 
       //空を飛ぶ攻撃は自爆ダメージあり
       $reactionPoint = 20;
@@ -249,9 +261,8 @@ class Boss extends Monster
   function __construct($name, $img)
   {
     //Boss固有のHPを設定
-    if (!empty($_SESSION['knockDownCount'])) {
-      $bossHp = 500 + ($_SESSION['knockDownCount'] * 10);
-    }
+    $bossHp = 500 + ($_SESSION['knockDownCount'] * 10);
+
     //Boss固有の攻撃力を設定
     $bossAttackMin = 50;
     $bossAttackMax = 80;
@@ -326,15 +337,14 @@ class History implements HistoryInterface
 }
 
 // インスタンス生成
-//Human($name, $sex, $hp, $img, $mp, $attackMin, $attackMax)
+//Human($name, $sex, $hp, $img,$attackMin, $attackMax)
 //God($name, $img)
-//Boss($name, $hp, $img,$attackMin, $attackMax)
+//Boss($name,$img):createBoss()のタイミングで生成
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 30, 40, 120);
-$witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', mt_rand(50, 100), 40, 120);
+$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 40, 120);
+$witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
-$boss = new Boss('魔王', DIR_IMAGES . 'boss.png');
 $monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
 $monsters[] = new MagicMonster('フランケンNEO', 300, DIR_IMAGES . 'monster02.png', 20, 60, mt_rand(50, 100));
 $monsters[] = new Monster('ドラキュリー', 200, DIR_IMAGES . 'monster03.png', 30, 50);
@@ -374,11 +384,10 @@ function createGod()
   $_SESSION['god'] =  $god;
 }
 
-//BOSSのHPパラメータ作成
 function createBoss()
 {
-  //Todo:Bossのインスタンスはこのタイミングで生成する
-  global $boss;
+  $boss = new Boss('魔王', DIR_IMAGES . 'boss.png');
+
   History::set('ラスボスの' . $boss->getName() . 'が現れた！');
   $_SESSION['enemy'] =  $boss;
 }
@@ -552,6 +561,10 @@ if (!empty($_POST)) {
       padding: 8px;
     }
 
+    label img:hover {
+      cursor: pointer;
+    }
+
     [type="radio"]:checked+label img {
       background: #FFF100;
     }
@@ -648,8 +661,8 @@ if (!empty($_POST)) {
       <p><?php echo $_SESSION['mainChara']->getName() ?>の残りMP：<?php echo $_SESSION['mainChara']->getMp(); ?></p>
       <form method="post">
         <input type="submit" name="attack" value="▶攻撃する">
-        <?php if ($_SESSION['mainChara']->getMp() >= 1) { ?>
-          <input type="submit" name="heal" value="▶回復する(mp:10)">
+        <?php if ($_SESSION['mainChara']->getMp() >= $_SESSION['mainChara']::getMpCost()) { ?>
+          <input type="submit" name="heal" value="▶回復する(mp:<?php echo $_SESSION['mainChara']::getMpCost() ?>)">
         <?php
       } else { ?>
           <input type="submit" name="heal" value="▶回復する(mp不足)" class="btn-short" disabled>
