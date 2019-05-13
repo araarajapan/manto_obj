@@ -429,7 +429,7 @@ function gameOver()
 
 //1.post送信されていた場合
 if (!empty($_POST)) {
-  $startFlg = (!empty($_POST['start'])) ? true : false;
+  $startFlg = (!empty($_POST['chara'])) ? true : false;
   $reStartFlg = (!empty($_POST['reStart'])) ? true : false;
 
   $attackFlg = (!empty($_POST['attack'])) ? true : false;
@@ -565,9 +565,9 @@ if (!empty($_POST)) {
       cursor: pointer;
     }
 
-    [type="radio"]:checked+label img {
+    /* [type="radio"]:checked+label img {
       background: #FFF100;
-    }
+    } */
 
     input[type="text"] {
       color: #545454;
@@ -622,6 +622,37 @@ if (!empty($_POST)) {
     a:hover {
       text-decoration: none;
     }
+
+    /* モーダル */
+    .btn {
+      background: black;
+      color: white;
+      border: none;
+      padding: 15px;
+      margin: 100px auto;
+      cursor: pointer;
+      display: block;
+    }
+
+    .modal {
+      width: 280px;
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 25%;
+      background: green;
+      z-index: 1;
+    }
+
+    .cover {
+      background: rgba(0, 0, 0, 0.5);
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none;
+    }
   </style>
 </head>
 
@@ -629,18 +660,22 @@ if (!empty($_POST)) {
   <h1 style="text-align:center; color:#333;">ゲーム「ドラ◯エ!!」</h1>
   <div style="background:black; padding:15px; position:relative;">
     <?php if (empty($_SESSION)) { ?>
-      <h2 style="margin-top:60px;">Select Character</h2>
-      <form method="post" style="text-align:center;">
-        <input type="radio" id="hero" name="chara" value="hero" style="display:none;" checked>
-        <label for="hero">
-          <img src="<?php echo $human->getImg(); ?>" alt="" style="width:110px; height:150px; border:1px solid #ffffff; display:inline-block;">
-        </label>
-        <input type="radio" id="witch" name="chara" value="witch" style="display:none;">
-        <label for="witch">
-          <img src="<?php echo $witch->getImg(); ?>" alt="" style="width:110px; height:150px; border:1px solid #ffffff; display:inline-block;">
-        </label>
-        <input type="submit" name="start" value="▶ゲームスタート">
-      </form>
+
+      <button id="js-start-modal" class="btn">▶ゲームスタート</button>
+
+      <div id="js-target-modal" class="modal">
+        <h2 style="margin-top:60px;">Select Character</h2>
+        <form method="post" style="text-align:center;">
+          <input type="submit" id="hero" name="chara" value="hero" style="display:none;">
+          <label for="hero">
+            <img src="<?php echo $human->getImg(); ?>" alt="" style="width:110px; height:150px; border:1px solid #ffffff; display:inline-block;">
+          </label>
+          <input type="submit" id="witch" name="chara" value="witch" style="display:none;">
+          <label for="witch">
+            <img src="<?php echo $witch->getImg(); ?>" alt="" style="width:110px; height:150px; border:1px solid #ffffff; display:inline-block;">
+          </label>
+        </form>
+      </div>
     <?php
   } elseif (!empty($_SESSION['clear_flg'])) { ?>
       <h2 style="margin-top:60px;">Game cleared</h2>
@@ -693,6 +728,9 @@ if (!empty($_POST)) {
       <p><?php echo (!empty($_SESSION['history'])) ? $_SESSION['history'] : ''; ?></p>
     </div>
   </div>
+  <div class="cover js-modal-cover"></div>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="app.js"></script>
 </body>
 
 </html>
