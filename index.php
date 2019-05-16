@@ -10,6 +10,9 @@ const DIR_IMAGES = 'img/';
 // モンスター達格納用
 $monsters = array();
 
+// ゲームオーバーカウント用
+$param = 0;
+
 // 性別クラス
 class Sex
 {
@@ -342,7 +345,7 @@ class History implements HistoryInterface
 //Boss($name,$img):createBoss()のタイミングで生成
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 40, 120);
+$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 40, 120); //500
 $witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
 $monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
@@ -426,6 +429,12 @@ function gameOver()
   $_POST = array();
 }
 
+//ゲームクリア時のイベント発火用の値をjsに渡し
+
+function json_safe_encode($data)
+{
+  return json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+}
 
 //1.post送信されていた場合
 if (!empty($_POST)) {
@@ -466,6 +475,7 @@ if (!empty($_POST)) {
 
       // 自分のhpが0以下になったらゲームオーバー
       if ($_SESSION['mainChara']->getHp() <= 0) {
+        $param++;
         gameOver();
       } else {
         // hpが0以下になったら、別のモンスターを出現させる
@@ -497,6 +507,7 @@ if (!empty($_POST)) {
 
       // 自分のhpが0以下になったらゲームオーバー
       if ($_SESSION['mainChara']->getHp() <= 0) {
+        $overNum++;
         gameOver();
       }
     } else { //逃げるを押した場合
@@ -538,6 +549,13 @@ if (!empty($_POST)) {
       width: 50%;
       background: #fbfbfa;
       color: white;
+    }
+
+    ul,
+    li {
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
 
     h1 {
@@ -647,7 +665,7 @@ if (!empty($_POST)) {
     .cover {
       background: rgba(0, 0, 0, 0.5);
       width: 100%;
-      height: 100%;
+      height: 1000px;
       position: absolute;
       top: 0;
       left: 0;
@@ -660,7 +678,11 @@ if (!empty($_POST)) {
   <h1 style="text-align:center; color:#333;">ゲーム「ドラ◯エ!!」</h1>
   <div style="background:black; padding:15px; position:relative;">
     <?php if (empty($_SESSION)) { ?>
-
+      <ul>
+        <li id="js-play-log"></li>
+        <li id="js-clear-log"></li>
+        <li id="js-over-log"></li>
+      </ul>
       <button id="js-start-modal" class="btn">▶ゲームスタート</button>
 
       <div id="js-target-modal" class="modal">
@@ -680,9 +702,8 @@ if (!empty($_POST)) {
   } elseif (!empty($_SESSION['clear_flg'])) { ?>
       <h2 style="margin-top:60px;">Game cleared</h2>
       <form method="post">
-        <input type="submit" name="reStart" value="▶ゲームリスタート">
+        <input id="js-clear-view" type="submit" name="reStart" value="▶ゲームリスタート">
       </form>
-      <!-- todo clear_flgでゲームクリア画面を作る -->
     <?php
   } elseif (empty($_SESSION['god'])) { ?>
       <!-- オブジェクトがモンスターorBossだった場合の表示 -->
@@ -729,8 +750,9 @@ if (!empty($_POST)) {
     </div>
   </div>
   <div class="cover js-modal-cover"></div>
+
   <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-  <script src="app.js"></script>
+  <script id="script" src="app.js" data-param='<?php echo json_safe_encode($param); ?>'></script>
 </body>
 
 </html>
