@@ -345,7 +345,7 @@ class History implements HistoryInterface
 //Boss($name,$img):createBoss()のタイミングで生成
 //Monster($name, $hp, $img, $attackMin, $attackMax)
 //MagicMonster($name, $hp, $img, $attackMin, $attackMax, $magicAttack)
-$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 40, 120); //500
+$human = new Human('勇者', Sex::MAN, 500, DIR_IMAGES . 'hero.png', 400, 1200);
 $witch = new Witch('魔法使い', Sex::WOMAN, 300, DIR_IMAGES . 'witch.png', 40, 120);
 $god = new God('神様', DIR_IMAGES . 'god.png');
 $monsters[] = new Monster('フランケン', 100, DIR_IMAGES . 'monster01.png', 20, 40);
@@ -475,7 +475,7 @@ if (!empty($_POST)) {
 
       // 自分のhpが0以下になったらゲームオーバー
       if ($_SESSION['mainChara']->getHp() <= 0) {
-        $param++;
+        $param = 1;
         gameOver();
       } else {
         // hpが0以下になったら、別のモンスターを出現させる
@@ -700,9 +700,9 @@ if (!empty($_POST)) {
       </div>
     <?php
   } elseif (!empty($_SESSION['clear_flg'])) { ?>
-      <h2 style="margin-top:60px;">Game cleared</h2>
+      <h2 id="js-clear-view" style="margin-top:60px;">Game cleared</h2>
       <form method="post">
-        <input id="js-clear-view" type="submit" name="reStart" value="▶ゲームリスタート">
+        <input type="submit" name="reStart" value="▶ゲームリスタート">
       </form>
     <?php
   } elseif (empty($_SESSION['god'])) { ?>

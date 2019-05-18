@@ -13,40 +13,32 @@ $(function() {
 
   //プレイ回数
   $("#js-start-modal").on("click", function() {
-    var playNum = getCookie("playNum");
+    var CookieName = "playNum";
+    var CookieNum = getCookie(CookieName);
 
-    if (playNum) {
-      playNum++;
-      document.cookie = "playNum=" + playNum;
-    } else {
-      document.cookie = "playNum=1";
-    }
+    addNumber(CookieName, CookieNum);
   });
 
   //クリア回数
-  $("#js-clear-view").on("click", function() {
-    var clearNum = getCookie("clearNum");
 
-    if (clearNum) {
-      clearNum++;
-      document.cookie = "clearNum=" + clearNum;
-    } else {
-      document.cookie = "clearNum=1";
-    }
-  });
+  var clearContent = $("#js-clear-view").val();
+  console.log(clearContent);
+  if (clearContent != null) {
+    var CookieName = "clearNum";
+    var CookieNum = getCookie(CookieName);
+
+    addNumber(CookieName, CookieNum);
+  }
 
   //ゲームオーバー回数
   //JQuery使って属性を取得する、JSON.parseで扱える形に変換
   var $script = $("#script");
   var result = JSON.parse($script.attr("data-param"));
   if (result === 1) {
-    var overNum = getCookie("overNum");
-    if (overNum) {
-      overNum++;
-      document.cookie = "overNum=" + overNum;
-    } else {
-      document.cookie = "overNum=1";
-    }
+    var CookieName = "overNum";
+    var CookieNum = getCookie(CookieName);
+
+    addNumber(CookieName, CookieNum);
   }
 
   //各ログをcookieから取り出し描画する
@@ -73,12 +65,19 @@ $(function() {
 
       var valueIndex = targetCookie.indexOf("=");
 
-      var targetSubst = targetCookie.substring(0, valueIndex);
-
       if (targetCookie.substring(0, valueIndex) === key) {
         return decodeURIComponent(targetCookie.slice(valueIndex + 1));
       }
     }
     return 0;
+  }
+
+  function addNumber(cookieName, cookieNum) {
+    if (cookieNum !== null) {
+      cookieNum++;
+      document.cookie = cookieName + "=" + cookieNum;
+    } else {
+      document.cookie = cookieName + "=1";
+    }
   }
 });
